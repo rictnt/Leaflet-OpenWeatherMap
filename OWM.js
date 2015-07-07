@@ -39,6 +39,7 @@ L.OWMLayer = L.Class.extend({
         }
         
         this._lang = options.language || 'eng';
+        this._key = options.key;
     },
     _icons: {
         '01d': '0.png',
@@ -83,7 +84,11 @@ L.OWMLayer = L.Class.extend({
         var _this = this;
         
         var requests = this._cityIDChunks.map(function(cityIDs) {
-            return $.getJSON('http://api.openweathermap.org/data/2.5/group', {id: cityIDs.join(','), units: 'metric'});
+            var params = {id: cityIDs.join(','), units: 'metric'};
+            if (_this._key) {
+                params.APPID = _this._key;
+            }
+            return $.getJSON('http://api.openweathermap.org/data/2.5/group', params);
         });
         
         $.when.apply($.when, requests).then(function() {
@@ -104,8 +109,13 @@ L.OWMLayer = L.Class.extend({
                 }).on('click', function() {
                     marker.unbindPopup();
                     
+                    var params = {id: city.id, units: 'metric'};
+                    if (_this._key) {
+                        params.APPID = _this._key;
+                    }
+                    
                     $.when(
-                        $.getJSON('http://api.openweathermap.org/data/2.5/forecast', {id: city.id, units: 'metric'}),
+                        $.getJSON('http://api.openweathermap.org/data/2.5/forecast', params),
                         $.getJSON('http://maps.kosmosnimki.ru/rest/ver1/layers/295894E2A2F742109AB112DBFEAEFF09/search', {
                             border: JSON.stringify({type: 'Point', coordinates: [city.coord.lon, city.coord.lat]}),
                             geometry: false,
