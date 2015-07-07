@@ -4,6 +4,25 @@ var posSign = function(num) {
     return num > 0 ? '+' + num : String(num);
 }
 
+var langDict = {
+    'eng': {
+        weekDay: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
+        timeOfDay: ['night', 'morning', 'day', 'evening'],
+        windDir: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'SW'],
+        windSpeedUnit: 'm/sec',
+        pressureUnit: 'mmHg',
+        copyright: 'Data from <a href="http://openweathermap.org/">OpenWeatherMap</a>'
+    }, 
+    'rus': {
+        weekDay: ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'],
+        timeOfDay: ['ночь', 'утро', 'день', 'вечер'],
+        windDir: ['С', 'СВ', 'В', 'ЮВ', 'Ю', 'ЮЗ', 'З', 'СЗ'],
+        windSpeedUnit: 'м/с',
+        pressureUnit: 'м.р.с.',
+        copyright: 'По данным <a href="http://openweathermap.org/">OpenWeatherMap</a>'
+    }
+}
+
 var defaultCityIDs = [1850147,1273294,1816670,1185241,3688357,3435910,1701668,2988506,1642911,1835848,3936456,2643743,2314302,112931,1819729,3117735,98182,3871336,1880252,2240449,188714,2293538,323784,323786,3369157,2950159,184745,3646738,1138958,2253354,344979,2306104,1512569,3718426,3492908,2352778,587084,2357048,2460596,1070940,625144,2538475,909137,2422465,3054643,3911925,3441575,232422,3652462,2260535,3583361,1733046,890299,964137,2673730,2595294,2028462,250441,727011,1040652,658226,2964574,611717,616051,3600949,6611854,2759794,1283240,202061,3617763,2279755,2409306,2394819,1176615,6453366,1528675,1651944,281184,2464470,2377450,927967,2274895,2389853,7280679,456172,6322737,3186886,2399697,162183,1526273,425378,3489854,593116,2413876,785842,223817,1018725,3060972,2374775,2179537,588409,2172517,3191281,3352136,2661552,2088122,2392087,3903987,3383330,3196359,373303,3571824,932505,160196,933773,2562305,1645457,2198148,3193044,934154,2309527,4033936,1282027,3378644,1238992,3513090,1252416,2960316,282239,2108502,3382160,934985,5881576,7828758,921772,2110257,3577154,4035413,2993458,2113779,2411586,3041563,1820906,3582672,2110425,7521431,2110384,3042030,3168070,3426691,2069194,4036284,7303944,3169070,2800866,2618425,6458923,264371,786714,792680,683506,618426,703448,170654,276781,146268,2761367,3067696,756135,3553478,3530597,4140963,6094817,5419384,4684888,5368361,6173331,1275339,292968,71137,360630,2210247,2507480,3469058,3439389,3663517,3688689,3662574,6183235,5946768,5876855,4180439];
 
 L.OWMLayer = L.Class.extend({
@@ -11,16 +30,16 @@ L.OWMLayer = L.Class.extend({
         return 'Weather from <a href="http://openweathermap.org/" alt="World Map and worldwide Weather Forecast online">OpenWeatherMap</a>';
     },
     initialize: function(options) {
-        var cityIDs = ((options && options.cityIDs) || defaultCityIDs).slice(0);
+        options = options || {};
+        var cityIDs = (options.cityIDs || defaultCityIDs).slice(0);
         
         this._cityIDChunks = [];
         while (cityIDs.length) {
             this._cityIDChunks.push(cityIDs.splice(0, 100));
         }
+        
+        this._lang = options.language || 'eng';
     },
-    _weekDayNames: ['ВС','ПН','ВТ','СР','ЧТ','ПТ','СБ'],
-    _tods: ['ночь','утро','день','вечер'],
-    _windDirs: ['С','СВ','В','ЮВ','Ю','ЮЗ','З','СЗ'],
     _icons: {
         '01d': '0.png',
         '01n': '0.png',
@@ -48,13 +67,13 @@ L.OWMLayer = L.Class.extend({
                 '<td>{{dayInfo}}</td>' +
                 '<td>{{tempMin}}..{{tempMax}}</td>' +
                 '<td>{{windDir}}</td>' +
-                '<td>{{windSpeed}} м/с</td>' +
-                '<td>{{pressure}} м.р.с.</td>' +
+                '<td>{{windSpeed}}</td>' +
+                '<td>{{pressure}}</td>' +
                 '<td>{{humidity}}%</td>' +
                 '<td><img width=16 height=16 src="http://maps.kosmosnimki.ru/api/img/weather/16/{{icon}}"></img></td>' +
             '</tr>{{/forecast}}' +
         '</tbody></table>' + 
-        '<div class="owm-city-copyright">По данным <a href="http://openweathermap.org/">OpenWeatherMap</a></div>',
+        '<div class="owm-city-copyright">{{{copyright}}}</div>',
     onAdd: function(map) {
         if (this._markers) {
             map.addLayer(this._markers);
@@ -94,7 +113,8 @@ L.OWMLayer = L.Class.extend({
                         })
                     ).then(function(owmRes, timeshiftRes) {
                         var owmData = owmRes[0],
-                            timeshiftData = timeshiftRes[0];
+                            timeshiftData = timeshiftRes[0],
+                            dict = langDict[_this._lang];
                             
                         var timeShift = Number(timeshiftData.features[0].properties.name);
                         
@@ -107,18 +127,22 @@ L.OWMLayer = L.Class.extend({
                                 localHours = localTime.getUTCHours();
                             
                             forecastData.push({
-                                dayInfo: _this._weekDayNames[localWeekDay] + ', ' + _this._tods[Math.floor(localHours/6)],
+                                dayInfo: dict.weekDay[localWeekDay] + ', ' + dict.timeOfDay[Math.floor(localHours/6)],
                                 tempMin: posSign(Math.round(f.main.temp_min)),
                                 tempMax: posSign(Math.round(f.main.temp_max)),
-                                windDir: _this._windDirs[Math.round(f.wind.deg/45) % 8],
-                                windSpeed: Math.round(f.wind.speed),
-                                pressure: Math.round(f.main.pressure*0.75006375541921),
+                                windDir: dict.windDir[Math.round(f.wind.deg/45) % 8],
+                                windSpeed: Math.round(f.wind.speed) + ' ' + dict.windSpeedUnit,
+                                pressure: Math.round(f.main.pressure * 0.75006375541921) + ' ' + dict.pressureUnit,
                                 humidity: Math.round(f.main.humidity),
                                 icon: _this._icons[f.weather[0].icon]
                             });
                         }
                         
-                        marker.bindPopup(Mustache.render(_this._template, {forecast: forecastData, cityName: owmData.city.name}), {maxWidth: 500}).openPopup();
+                        marker.bindPopup(Mustache.render(_this._template, {
+                            forecast: forecastData, 
+                            cityName: owmData.city.name, 
+                            copyright: dict.copyright
+                        }), {maxWidth: 500}).openPopup();
                     })
                 });
                 
