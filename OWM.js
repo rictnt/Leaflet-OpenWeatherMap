@@ -139,6 +139,9 @@ L.OWMLayer = L.Class.extend({
                         var html = '';
                         for (var t = 0; t < 4; t++) {
                             var f = owmData.list[2 * t + 1]; //each 6 hours
+
+                            if (!f) continue;
+
                             var localTime = new Date(f.dt*1000 + timeShift*3600*1000),
                                 localWeekDay = localTime.getUTCDay(),
                                 localHours = localTime.getUTCHours();
