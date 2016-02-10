@@ -75,7 +75,7 @@ L.OWMLayer = L.Class.extend({
         '50d': '9.png',
         '50n': '9.png'
     },
-    _template:
+    _template: Handlebars.compile(
         '<div class="owm-city-name">{{cityName}}</div>' +
         '<table class="owm-forecast-table"><tbody>' +
             '{{#forecast}}<tr>' +
@@ -88,7 +88,7 @@ L.OWMLayer = L.Class.extend({
                 '<td><img width=16 height=16 src="http://maps.kosmosnimki.ru/api/img/weather/16/{{icon}}"></img></td>' +
             '</tr>{{/forecast}}' +
         '</tbody></table>' + 
-        '<div class="owm-city-copyright">{{{copyright}}}</div>',
+        '<div class="owm-city-copyright">{{{copyright}}}</div>'),
     onAdd: function(map) {
         if (this._markers) {
             map.addLayer(this._markers);
@@ -155,7 +155,7 @@ L.OWMLayer = L.Class.extend({
                             });
                         }
                         
-                        marker.bindPopup(Mustache.render(_this._template, {
+                        marker.bindPopup(_this._template({
                             forecast: forecastData, 
                             cityName: owmData.city.name, 
                             copyright: dict.copyright
