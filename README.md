@@ -19,3 +19,6 @@ Leaflet plugin to show weather from [Open Weather Map](http://openweathermap.org
 The following `options` of `L.OWMLayer` constructor are available:
   * `key`: [Open Weather Map APPID](http://openweathermap.org/appid)
   * `cityIDs`: array of city IDs, see [Open Weather Map API](http://openweathermap.org/api)
+  
+### License
+[The MIT License](https://opensource.org/licenses/MIT)
