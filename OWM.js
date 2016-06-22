@@ -30,11 +30,11 @@ var defaultLocalDateProvider = function(lat, lng) {
     $.getJSON('http://maps.kosmosnimki.ru/rest/ver1/layers/295894E2A2F742109AB112DBFEAEFF09/search', {
         border: JSON.stringify({type: 'Point', coordinates: [lng, lat]}),
         geometry: false,
-        api_key: 'KNO7UQTD3W'
+        api_key: 'Y5YMN9XSOC'
     }).then(function(result) {
         def.resolve(Number(result.features[0].properties.name));
     }, def.reject.bind(def))
-    
+
     return def.promise();
 };
 
