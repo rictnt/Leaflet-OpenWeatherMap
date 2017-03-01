@@ -21,4 +21,4 @@ The following `options` of `L.OWMLayer` constructor are available:
   * `cityIDs`: array of city IDs, see [Open Weather Map API](http://openweathermap.org/api)
   
 ### License
-[The MIT License](https://opensource.org/licenses/MIT)
+[MIT](https://opensource.org/licenses/MIT)
